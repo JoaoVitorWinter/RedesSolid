@@ -1,43 +1,66 @@
 package com.ativ.security.redessolid.service;
 
+import com.ativ.security.redessolid.exception.MascaraInvalidaException;
+import com.ativ.security.redessolid.exception.QuantidadeDeOctetosInvalidoException;
 import com.ativ.security.redessolid.model.IPComMascara;
 import com.ativ.security.redessolid.model.Rede;
+import com.ativ.security.redessolid.utils.ConversorIntegerParaBooleanUtils;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 
 @Service
+@AllArgsConstructor
 public class CalculadoraRede implements Calculadora<IPComMascara, Rede> {
-
+    private ConversorIntegerParaBooleanUtils conversorIntegerParaBooleanUtils;
 
     @Override
-    public Rede calcular(IPComMascara request) throws Exception {
-        verificarRequestRede(request);
+    public Rede calcular(IPComMascara request) throws QuantidadeDeOctetosInvalidoException, MascaraInvalidaException {
+        Rede rede = new Rede();
+        Integer mascara = request.getMascara();
         Integer[] quatroOctetosDoIp = Arrays.stream(request.getIp().split("\\."))
                 .map(Integer::parseInt).toArray(Integer[]::new);
-        System.out.println(Arrays.toString(quatroOctetosDoIp));
-        boolean[] ipBits = new boolean[32];
-        System.out.println(Arrays.toString(ipBits));
-        for (int i = 0; i < ipBits.length; i++) {
-            int octeto = quatroOctetosDoIp[i / 8];
-            if (octeto == 0) {
-                i = i + (8 - (i % 8) - 1);
-                continue;
-            }
-            System.out.println(octeto);
-            int valorBit = (int) Math.pow(2, (8 - (i % 8) - 1));
-            ipBits[i] = octeto >= valorBit;
-            if (ipBits[i]) {
-                quatroOctetosDoIp[i / 8] = octeto - valorBit;
-            }
+        boolean[][] ipBits = conversorIntegerParaBooleanUtils.
+                arrayDeNumerosParaQuatroOctetos(quatroOctetosDoIp);
+        boolean[][] mascaraBits = conversorIntegerParaBooleanUtils.mascaraParaQuatroOctetos(mascara);
+        rede.setIpRede(calcularIpRede(ipBits, mascaraBits));
+        rede.setIpBroadcast(calcularIpBroadcast(ipBits, mascaraBits));
+        rede.setNumeroDeHosts((int) (Math.pow(2, 32 - mascara) - 2));
+        rede.setMascara(mascara);
+        return rede;
 
-
-        }
-        System.out.println(Arrays.toString(ipBits));
-        return null;
     }
 
-    private void verificarRequestRede(IPComMascara request) {
+    private String calcularIpBroadcast(boolean[][] ipBits, boolean[][] mascaraBits) {
+        Integer[] octetos = {255, 255, 255, 255};
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (!ipBits[i][j] && mascaraBits[i][j]) {
+                    octetos[i] -= (int) Math.pow(2,  7 - j);
+                }
+            }
+        }
+        return transformarOctetosEmIp(octetos);
 
+    }
+
+
+
+    private String calcularIpRede(boolean[][] ipBits, boolean[][] mascaraBits) {
+        Integer[] octetos = {0, 0, 0, 0};
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (ipBits[i][j] && mascaraBits[i][j]) {
+                    octetos[i] += (int) Math.pow(2,  7 - j);
+                }
+            }
+        }
+        return transformarOctetosEmIp(octetos);
+    }
+
+    private String transformarOctetosEmIp(Integer[] octetos) {
+        return String.join(".", Arrays.stream(octetos)
+                .map(Object::toString).toArray(String[]::new));
     }
 }

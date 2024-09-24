@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Rede {
-    private String idRede;
-    private String idBroadcast;
+    private String ipRede;
+    private String ipBroadcast;
     private Integer numeroDeHosts;
     private Integer mascara;
 }
