@@ -35,7 +35,7 @@ public class ConversorIntegerParaBooleanUtils {
         if (mascara < 1) {
             throw new MascaraInvalidaException("Máscara deve ser no mínimo 1 para uma rede válida!");
         }
-        if (mascara  > 30) {
+        if (mascara > 30) {
             throw new MascaraInvalidaException("Máscara deve ser no máximo 30 para uma rede válida!");
         }
     }

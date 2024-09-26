@@ -2,25 +2,26 @@ package com.ativ.security.redessolid.service;
 
 import com.ativ.security.redessolid.exception.MascaraInvalidaException;
 import com.ativ.security.redessolid.exception.QuantidadeDeOctetosInvalidoException;
-import com.ativ.security.redessolid.model.IPComMascara;
-import com.ativ.security.redessolid.model.Rede;
+import com.ativ.security.redessolid.dto.IPComMascara;
+import com.ativ.security.redessolid.dto.Rede;
 import com.ativ.security.redessolid.utils.ConversorIntegerParaBooleanUtils;
+import com.ativ.security.redessolid.utils.ConversorOctetoParaStringUtils;
+import com.ativ.security.redessolid.utils.ConversorStringParaOctetoUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.Arrays;
 
 @Service
 @AllArgsConstructor
 public class CalculadoraRede implements Calculadora<IPComMascara, Rede> {
     private ConversorIntegerParaBooleanUtils conversorIntegerParaBooleanUtils;
+    private ConversorStringParaOctetoUtils conversorStringParaOctetoUtils;
+    private ConversorOctetoParaStringUtils conversorOctetoParaStringUtils;
 
     @Override
     public Rede calcular(IPComMascara request) throws QuantidadeDeOctetosInvalidoException, MascaraInvalidaException {
         Rede rede = new Rede();
         Integer mascara = request.getMascara();
-        Integer[] quatroOctetosDoIp = Arrays.stream(request.getIp().split("\\."))
-                .map(Integer::parseInt).toArray(Integer[]::new);
+        Integer[] quatroOctetosDoIp = conversorStringParaOctetoUtils.converterStringParaOctetos(request.getIp());
         boolean[][] ipBits = conversorIntegerParaBooleanUtils.
                 arrayDeNumerosParaQuatroOctetos(quatroOctetosDoIp);
         boolean[][] mascaraBits = conversorIntegerParaBooleanUtils.mascaraParaQuatroOctetos(mascara);
@@ -41,11 +42,9 @@ public class CalculadoraRede implements Calculadora<IPComMascara, Rede> {
                 }
             }
         }
-        return transformarOctetosEmIp(octetos);
+        return conversorOctetoParaStringUtils.transformarOctetosEmIp(octetos);
 
     }
-
-
 
     private String calcularIpRede(boolean[][] ipBits, boolean[][] mascaraBits) {
         Integer[] octetos = {0, 0, 0, 0};
@@ -56,11 +55,6 @@ public class CalculadoraRede implements Calculadora<IPComMascara, Rede> {
                 }
             }
         }
-        return transformarOctetosEmIp(octetos);
-    }
-
-    private String transformarOctetosEmIp(Integer[] octetos) {
-        return String.join(".", Arrays.stream(octetos)
-                .map(Object::toString).toArray(String[]::new));
+        return conversorOctetoParaStringUtils.transformarOctetosEmIp(octetos);
     }
 }

@@ -1,4 +1,4 @@
-package com.ativ.security.redessolid.model;
+package com.ativ.security.redessolid.dto;
 
 
 import lombok.AllArgsConstructor;
